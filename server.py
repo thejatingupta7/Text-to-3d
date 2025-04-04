@@ -20,7 +20,7 @@ MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 # Setup Azure OpenAI API
-token = "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"
+token = ""
 endpoint = "https://models.inference.ai.azure.com"
 model_name = "gpt-4o"
 
@@ -30,7 +30,7 @@ client = OpenAI(
 )
 
 # Tripo3D API settings
-TRIPO3D_API_KEY = "tsk_1LlF24J8qJIebtlxpyJ_1yFYD67eHLzZHOteXPkdC6h"  # Replace with your actual API key
+TRIPO3D_API_KEY = ""  # Replace with your actual API key
 TRIPO3D_API_URL = "https://api.tripo3d.ai/v2/openapi/task"
 
 @app.route("/")
