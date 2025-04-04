@@ -1,0 +1,14 @@
+{
+  "name": "3d-model-converter",
+  "version": "1.0.0",
+  "description": "Convert Three.js scenes to GLTF format",
+  "type": "module",
+  "main": "convert_to_gltf.js",
+  "scripts": {
+    "start": "node convert_to_gltf.js"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "three-csg-ts": "^1.0.0"
+  }
+} 

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Scene Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #111827, #1f2937);
+            color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #container {
+            display: flex;
+            height: 100vh;
+        }
+        #sidebar {
+            width: 33%; /* Changed from fixed 400px to 1/3 of page width */
+            background: linear-gradient(160deg,rgb(18, 24, 34),rgb(7, 11, 20));
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.4);
+            overflow-y: auto; /* Added in case content overflows vertically */
+        }
+        #viewport {
+            flex: 1;
+            position: relative;
+        }
+        #preview-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
+            display: none;
+            background: rgba(18, 24, 34, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: opacity 0.3s ease;
+        }
+        #preview-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        #preview-label {
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+            color: #f3f4f6;
+            background-color: rgba(0,0,0,0.5);
+        }
+        #prompt-input {
+            width: 100%;
+            padding: 18px;
+            margin-bottom: 25px;
+            background: linear-gradient(to bottom, #374151, #2d3748);
+            border: 1px solid #4b5563;
+            color: #f9fafb;
+            border-radius: 10px;
+            font-size: 17px;
+            min-height: 120px;
+            resize: vertical;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            box-sizing: border-box; /* Added to include padding in width calculation */
+        }
+        #prompt-input::placeholder {
+            color: #9ca3af;
+        }
+        #prompt-input:focus {
+            border-color: #8b5cf6;
+            outline: none;
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+        }
+        .button-container {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 25px;
+            flex-wrap: wrap; /* Added to allow buttons to wrap on smaller screens */
+        }
+        #generate-btn {
+            flex: 1;
+            padding: 18px;
+            background: linear-gradient(to right, #8b5cf6, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 17px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            min-width: 100px; /* Added to prevent too narrow buttons */
+        }
+        #generate-btn:hover {
+            background: linear-gradient(to right, #7c3aed, #6d28d9);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+        }
+        .download-btn {
+            flex: 1;
+            padding: 18px;
+            background: linear-gradient(to right, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 17px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            min-width: 100px; /* Added to prevent too narrow buttons */
+        }
+        .download-btn:hover {
+            background: linear-gradient(to right, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+        }
+        #tripo3d-btn {
+            flex: 1;
+            padding: 18px;
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 17px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            min-width: 100px; /* Added to prevent too narrow buttons */
+        }
+        #tripo3d-btn:hover {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 25px;
+            background: linear-gradient(to right, #374151, #1f2937);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        #loading-text {
+            color: #f3f4f6;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        #loading-animation {
+            display: flex;
+            justify-content: center;
+        }
+        #error {
+            display: none;
+            color: #f87171;
+            margin-top: 15px;
+            padding: 18px;
+            background: linear-gradient(to right, #7f1d1d, #991b1b);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        #progress {
+            display: none;
+            margin-top: 15px;
+            padding: 18px;
+            background: linear-gradient(to right, #374151, #1f2937);
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        #progress-text {
+            color: #f3f4f6;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #4b5563;
+            border-radius: 5px;
+            height: 10px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        h2 {
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: #ffffff;
+            font-size: 28px;
+            text-shadow: 0 2px 4pxrgb(248, 246, 250);
+            text-align: center;
+            background: linear-gradient(to right, #a442dd, #c53de4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #4b5563;
+            font-weight: 600;
+        }
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(to right, #374151, #1f2937);
+            border-radius: 10px;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .control-label {
+            color: #f3f4f6;
+            font-size: 14px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #4b5563;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #8b5cf6;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="sidebar">
+            <h2>3D Scene Generator</h2>
+            <textarea id="prompt-input" rows="6" placeholder="Describe your 3D scene..."></textarea>
+            <div class="button-container">
+                <button id="generate-btn">Generate Scene</button>
+                <button id="tripo3d-btn">Generate 3D Model</button>
+            </div>
+            <div class="button-container">
+                <button onclick="downloadGLTF()" class="download-btn">Download GLTF</button>
+            </div>
+            <div class="controls-container">
+                <div class="control-row">
+                    <span class="control-label">Show Grid</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="grid-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="control-row">
+                    <span class="control-label">Auto Rotate</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="rotate-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div id="loading">
+                <div id="loading-text">Generating your 3D scene...</div>
+                <div id="loading-animation">
+                    <dotlottie-player src="https://lottie.host/acaee2bc-4462-4dd9-8a11-5f939e3f7efb/vMK43apwov.lottie" background="transparent" speed="1" style="width: 200px; height: 200px" loop autoplay></dotlottie-player>
+                </div>
+            </div>
+            <div id="progress">
+                <div id="progress-text">Generating 3D model (this may take a while)...</div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                </div>
+            </div>
+            <div id="error"></div>
+        </div>
+        <div id="viewport"></div>
+        <div id="preview-container">
+            <img id="preview-image" alt="Model Preview">
+            <div id="preview-label">Preview Image</div>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, controls;
+        let currentScene = null;
+        let gridHelper;
+        let autoRotate = false;
+        let gltfLoader;
+        let currentModel = null;
+        let previewContainer = null;
+        let previewImage = null;
+
+        function init() {
+            // Initialize preview elements
+            previewContainer = document.getElementById('preview-container');
+            previewImage = document.getElementById('preview-image');
+            
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111827);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+
+            // Create renderer
+            const sidebar = document.getElementById('sidebar');
+            const sidebarWidth = sidebar.offsetWidth;
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth - sidebarWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('viewport').appendChild(renderer.domElement);
+
+            // Add enhanced orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.rotateSpeed = 0.8;
+            controls.zoomSpeed = 1.2;
+            controls.panSpeed = 0.8;
+            controls.minDistance = 2;
+            controls.maxDistance = 50;
+            controls.maxPolarAngle = Math.PI / 2 + 0.4; // Limit to slightly below ground level
+            controls.target.set(0, 0, 0);
+
+            // Initialize GLTF loader
+            gltfLoader = new THREE.GLTFLoader();
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 7.5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -20;
+            directionalLight.shadow.camera.right = 20;
+            directionalLight.shadow.camera.top = 20;
+            directionalLight.shadow.camera.bottom = -20;
+            scene.add(directionalLight);
+
+            // Add grid helper
+            addGrid();
+
+            // Event listeners for controls
+            document.getElementById('grid-toggle').addEventListener('change', function(e) {
+                toggleGrid(e.target.checked);
+            });
+
+            document.getElementById('rotate-toggle').addEventListener('change', function(e) {
+                autoRotate = e.target.checked;
+                controls.autoRotate = autoRotate;
+                controls.autoRotateSpeed = 3.0; // Rotation speed
+            });
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const sidebarWidth = sidebar.offsetWidth;
+                camera.aspect = (window.innerWidth - sidebarWidth) / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth - sidebarWidth, window.innerHeight);
+            });
+        }
+
+        function addGrid() {
+            // Create grid helper
+            gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+            gridHelper.material.opacity = 0.5;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+        }
+
+        function toggleGrid(visible) {
+            if (gridHelper) {
+                gridHelper.visible = visible;
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function loadScene() {
+            // Remove current scene if exists
+            if (currentScene) {
+                scene.remove(currentScene);
+            }
+            
+            // Remove current model if exists
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel = null;
+            }
+
+            // Load scene with timestamp to prevent caching
+            const timestamp = new Date().getTime();
+            const script = document.createElement('script');
+            script.src = `/scenes/current_scene.js?t=${timestamp}`;
+            script.onload = () => {
+                try {
+                    if (typeof createScene === 'function') {
+                        currentScene = createScene();
+                        // Center the scene
+                        if (currentScene) {
+                            const box = new THREE.Box3().setFromObject(currentScene);
+                            const center = box.getCenter(new THREE.Vector3());
+                            currentScene.position.sub(center);
+                            currentScene.position.y = 0; // Keep bottom at ground level
+                            
+                            // Adjust camera position based on scene size
+                            const size = box.getSize(new THREE.Vector3());
+                            const maxDim = Math.max(size.x, size.y, size.z);
+                            camera.position.set(maxDim * 1.5, maxDim, maxDim * 1.5);
+                            controls.target.set(0, size.y / 2, 0);
+                            controls.update();
+                        }
+                        scene.add(currentScene);
+                    } else {
+                        showError('Invalid scene format');
+                    }
+                } catch (error) {
+                    showError('Error loading scene: ' + error.message);
+                }
+            };
+            document.head.appendChild(script);
+        }
+
+        function loadModel(modelPath, previewImagePath) {
+            // Remove current scene if exists
+            if (currentScene) {
+                scene.remove(currentScene);
+                currentScene = null;
+            }
+            
+            // Remove current model if exists
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel = null;
+            }
+            
+            // Show loading animation
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading-text').textContent = 'Loading 3D model...';
+            
+            // Show preview image if available
+            if (previewImagePath) {
+                previewImage.src = previewImagePath;
+                previewImage.onload = function() {
+                    previewContainer.style.display = 'block';
+                };
+            } else {
+                previewContainer.style.display = 'none';
+            }
+            
+            // Load the GLTF/GLB model
+            gltfLoader.load(
+                modelPath,
+                function (gltf) {
+                    currentModel = gltf.scene;
+                    
+                    // Apply standard material properties if needed
+                    currentModel.traverse(function(node) {
+                        if (node.isMesh) {
+                            // Ensure materials render correctly
+                            if (node.material) {
+                                node.material.side = THREE.DoubleSide;
+                                node.castShadow = true;
+                                node.receiveShadow = true;
+                            }
+                        }
+                    });
+                    
+                    // Center the model
+                    const box = new THREE.Box3().setFromObject(currentModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    currentModel.position.sub(center);
+                    
+                    // Calculate the size of the model
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    
+                    // Position the model so the bottom is at ground level
+                    currentModel.position.y = size.y / 2;
+                    
+                    // Adjust camera position and controls based on model size
+                    camera.position.set(maxDim * 1.5, maxDim, maxDim * 1.5);
+                    controls.target.set(0, size.y / 2, 0);
+                    controls.minDistance = maxDim * 0.5;
+                    controls.maxDistance = maxDim * 5;
+                    controls.update();
+                    
+                    // Add the model to the scene
+                    scene.add(currentModel);
+                    
+                    // Hide loading animation
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // Fade out preview after a short delay
+                    setTimeout(() => {
+                        previewContainer.style.opacity = '0';
+                        setTimeout(() => {
+                            previewContainer.style.display = 'none';
+                            previewContainer.style.opacity = '1';
+                        }, 500);
+                    }, 1500);
+                    
+                    // Log success
+                    console.log('Model loaded successfully:', modelPath);
+                },
+                function (xhr) {
+                    // Progress callback
+                    const percentComplete = xhr.loaded / xhr.total * 100;
+                    console.log(percentComplete.toFixed(2) + '% loaded');
+                    document.getElementById('loading-text').textContent = `Loading 3D model: ${percentComplete.toFixed(0)}%`;
+                },
+                function (error) {
+                    // Error callback
+                    console.error('Error loading model:', error);
+                    document.getElementById('loading').style.display = 'none';
+                    previewContainer.style.display = 'none';
+                    showError('Error loading model: ' + error.message);
+                }
+            );
+        }
+
+        // Handle generate button click
+        document.getElementById('generate-btn').addEventListener('click', async () => {
+            const prompt = document.getElementById('prompt-input').value;
+            if (!prompt) {
+                showError('Please enter a scene description');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/generate_3d', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt }),
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    loadScene();
+                } else {
+                    showError(data.error || 'Failed to generate scene');
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        // Handle Tripo3D model generation button click
+        document.getElementById('tripo3d-btn').addEventListener('click', async () => {
+            const prompt = document.getElementById('prompt-input').value;
+            if (!prompt) {
+                showError('Please enter a scene description');
+                return;
+            }
+
+            // Show progress indicator
+            const progress = document.getElementById('progress');
+            progress.style.display = 'block';
+            const progressBarFill = document.getElementById('progress-bar-fill');
+            progressBarFill.style.width = '10%';
+            document.getElementById('progress-text').textContent = 'Initializing 3D model generation...';
+
+            try {
+                // Step 1: Start the model generation task
+                const response = await fetch('/generate_tripo3d_model', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt }),
+                });
+
+                const data = await response.json();
+                if (data.status === 'success' && data.task_id) {
+                    // Step 2: Poll for task completion
+                    progressBarFill.style.width = '30%';
+                    document.getElementById('progress-text').textContent = 'Generating 3D model (this may take a while)...';
+                    
+                    let retryCount = 0;
+                    const MAX_RETRIES = 60; // Maximum number of status checks before giving up (3 minutes at 3-second intervals)
+                    
+                    const checkStatus = async (taskId) => {
+                        // Check if we've exceeded the maximum number of retries
+                        if (retryCount >= MAX_RETRIES) {
+                            progress.style.display = 'none';
+                            showError('Model generation is taking too long. The process may still be running in the background. Try again later.');
+                            return;
+                        }
+                        
+                        retryCount++;
+                        console.log(`Checking status: Attempt ${retryCount} of ${MAX_RETRIES}`);
+                        
+                        try {
+                            const statusResponse = await fetch(`/check_tripo3d_status/${taskId}`);
+                            
+                            if (!statusResponse.ok) {
+                                throw new Error(`Status check failed with code: ${statusResponse.status}`);
+                            }
+                            
+                            const statusData = await statusResponse.json();
+                            console.log('Status response:', statusData);
+                            
+                            if (statusData.status === 'completed' && statusData.model_path) {
+                                // Model is ready, load it
+                                progressBarFill.style.width = '100%';
+                                document.getElementById('progress-text').textContent = 'Model generated successfully! Loading...';
+                                
+                                setTimeout(() => {
+                                    progress.style.display = 'none';
+                                    // Pass the preview image path if available
+                                    loadModel(statusData.model_path, statusData.preview_image);
+                                }, 500);
+                            } else if (statusData.error) {
+                                // Show error
+                                progress.style.display = 'none';
+                                showError(statusData.error);
+                            } else {
+                                // Update progress based on status
+                                if (statusData.status === 'pending') {
+                                    progressBarFill.style.width = '40%';
+                                    document.getElementById('progress-text').textContent = 'Model pending in queue...';
+                                } else if (statusData.status === 'processing') {
+                                    const progressPercentage = 40 + (retryCount / MAX_RETRIES) * 50;
+                                    progressBarFill.style.width = `${Math.min(progressPercentage, 90)}%`;
+                                    document.getElementById('progress-text').textContent = 'Processing your 3D model...';
+                                } else if (statusData.status === 'success') {
+                                    // The server might still be downloading the model
+                                    progressBarFill.style.width = '95%';
+                                    document.getElementById('progress-text').textContent = 'Downloading model...';
+                                } else {
+                                    // Unknown status
+                                    document.getElementById('progress-text').textContent = `Status: ${statusData.status || 'unknown'}, still waiting...`;
+                                }
+                                
+                                // Check again after 3 seconds
+                                setTimeout(() => checkStatus(taskId), 3000);
+                            }
+                        } catch (error) {
+                            console.error('Error checking status:', error);
+                            
+                            // If there's an error, retry a few times before giving up
+                            if (retryCount < 5) {
+                                setTimeout(() => checkStatus(taskId), 3000);
+                            } else {
+                                progress.style.display = 'none';
+                                showError(`Error checking model status: ${error.message}`);
+                            }
+                        }
+                    };
+                    
+                    // Start checking status
+                    checkStatus(data.task_id);
+                } else {
+                    progress.style.display = 'none';
+                    showError(data.error || 'Failed to start model generation');
+                }
+            } catch (error) {
+                progress.style.display = 'none';
+                showError('Error: ' + error.message);
+            }
+        });
+
+        async function downloadGLTF() {
+            try {
+                const response = await fetch('/download_gltf', {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to download GLTF');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'model.gltf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Error downloading GLTF:', error);
+                // Fallback to base GLTF file
+                const baseUrl = '/static/scenes/base_model.gltf';
+                const a = document.createElement('a');
+                a.href = baseUrl;
+                a.download = 'base_model.gltf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>
