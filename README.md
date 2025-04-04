@@ -66,4 +66,4 @@ A web application that allows users to generate 3D scenes and models from text d
 
 ## License
 
-[MIT License](LICENSE) 
+[Apache 2.0 License](LICENSE) 
