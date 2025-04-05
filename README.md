@@ -21,15 +21,6 @@ A web application that allows users to generate 3D scenes and models from text d
 - Download 3D models in glTF/GLB format
 - Modern, responsive web interface
 
-## Technologies Used
-
-- **Backend**: Flask (Python)
-- **Frontend**: HTML, CSS, JavaScript
-- **3D Rendering**: Three.js
-- **AI Services**:
-  - Azure OpenAI API for scene generation
-  - Tripo3D API for 3D model creation
-
 ## Setup Instructions
 
 ### Prerequisites
@@ -57,6 +48,27 @@ A web application that allows users to generate 3D scenes and models from text d
    python server.py
    ```
 2. Open a web browser and navigate to `http://localhost:5000`
+
+---
+
+
+
+https://github.com/user-attachments/assets/f182a480-9f20-46cb-9e99-909908585b3c
+
+
+
+---
+
+
+## Technologies Used
+
+- **Backend**: Flask (Python)
+- **Frontend**: HTML, CSS, JavaScript
+- **3D Rendering**: Three.js
+- **AI Services**:
+  - Azure OpenAI API for scene generation
+  - Tripo3D API for 3D model creation
+
 
 ## Usage
 
