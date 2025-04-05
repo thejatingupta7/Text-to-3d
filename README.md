@@ -2,7 +2,15 @@
 
 A web application that allows users to generate 3D scenes and models from text descriptions using AI technologies.
 
-![WhatsApp Image 2025-04-05 at 02 42 27_e29b5264](https://github.com/user-attachments/assets/9dec2b17-5c6e-403a-b337-6b949fcc9dbe)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a09ecc96-4a60-4fe3-b1c7-614531fb2861" width="200"/>
+  <img src="https://github.com/user-attachments/assets/28a5ef55-ad95-48d9-a0a4-24d9ee69411f" width="200"/>
+  <img src="https://github.com/user-attachments/assets/245b76bd-bee4-4bed-b9e9-6e593d76bd0b" width="200"/>
+</p>
+
+
+
+
 
 
 ## Features
