@@ -2,6 +2,9 @@
 
 A web application that allows users to generate 3D scenes and models from text descriptions using AI technologies.
 
+![WhatsApp Image 2025-04-05 at 02 42 27_e29b5264](https://github.com/user-attachments/assets/9dec2b17-5c6e-403a-b337-6b949fcc9dbe)
+
+
 ## Features
 
 - Generate Three.js-compatible 3D scenes from text prompts
