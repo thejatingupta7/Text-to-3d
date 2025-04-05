@@ -6,7 +6,7 @@ A web application that allows users to generate 3D scenes and models from text d
   <img src="https://github.com/user-attachments/assets/a09ecc96-4a60-4fe3-b1c7-614531fb2861" width="230"/>
   <img src="https://github.com/user-attachments/assets/28a5ef55-ad95-48d9-a0a4-24d9ee69411f" width="230"/>
   <img src="https://github.com/user-attachments/assets/245b76bd-bee4-4bed-b9e9-6e593d76bd0b" width="230"/>
-  <img src="https://github.com/user-attachments/assets/f8d1bf1c-b775-408d-9819-f21168360038" width="230:/>
+  <img src="https://github.com/user-attachments/assets/f8d1bf1c-b775-408d-9819-f21168360038" width="230"/>
 </p>
 
 
